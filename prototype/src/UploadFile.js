@@ -3,11 +3,11 @@ export const uploadToIPFS = async (file) => {
   formData.append('file', file);
   
   try {
+    console.log("jwt", process.env.REACT_APP_PINATA_JWT);
     const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
       method: 'POST',
       headers: {
-        'pinata_api_key': process.env.REACT_APP_PINATA_API_KEY,
-        'pinata_secret_api_key': process.env.REACT_APP_PINATA_SECRET_KEY,
+        Authorization: `Bearer ${process.env.REACT_APP_PINATA_JWT}`,
       },
       body: formData,
     });
