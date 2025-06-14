@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, Wallet } from 'lucide-react';
-
+import { uploadToIPFS } from './UploadFile'; // Ensure you have this service set up
 export default function DocumentUploadApp() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
@@ -43,7 +43,7 @@ export default function DocumentUploadApp() {
     setWalletAddress('');
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!isWalletConnected) {
       alert('Please connect your wallet first');
       return;
@@ -54,8 +54,13 @@ export default function DocumentUploadApp() {
       return;
     }
     
-    alert(`File "${selectedFile.name}" uploaded successfully!`);
-    setSelectedFile(null);
+    const result = await uploadToIPFS(selectedFile);
+    if (result.success) {
+      alert(`File uploaded to IPFS successfully!\nHash: ${result.hash}\nURL: ${result.url}`);
+      setSelectedFile(null);
+    } else {
+      alert(`Upload failed: ${result.error}`);
+    }
   };
 
   return (
@@ -149,7 +154,7 @@ export default function DocumentUploadApp() {
             disabled={!selectedFile || !isWalletConnected}
             className="w-full mt-6 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
-            Upload Document
+            Upload to IPFS
           </button>
         </div>
       </div>
