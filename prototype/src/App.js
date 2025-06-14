@@ -149,7 +149,7 @@ const handleUpload = async () => {
               onChange={handleFileChange}
               className="hidden"
               id="file-upload"
-              accept=".pdf,.doc,.docx,.txt"
+              accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.json"
               disabled={!isWalletConnected}
             />
             
@@ -165,7 +165,7 @@ const handleUpload = async () => {
             </p>
             
             <p className="text-gray-400 text-xs mt-2">
-              PDF, DOC, DOCX, TXT
+              PDF, DOC, DOCX, TXT, EXCEL, CSV, JSON 
             </p>
           </div>
 
