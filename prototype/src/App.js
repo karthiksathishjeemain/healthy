@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Upload, Wallet } from 'lucide-react';
-import { uploadToIPFS } from './UploadFile'; // Ensure you have this service set up
+import { uploadToIPFS } from './UploadFile'; 
+import { storeDocumentHash } from './contractService';
+// Ensure you have this service set up
 export default function DocumentUploadApp() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
@@ -43,26 +45,55 @@ export default function DocumentUploadApp() {
     setWalletAddress('');
   };
 
-  const handleUpload = async () => {
-    if (!isWalletConnected) {
-      alert('Please connect your wallet first');
-      return;
-    }
+  // const handleUpload = async () => {
+  //   if (!isWalletConnected) {
+  //     alert('Please connect your wallet first');
+  //     return;
+  //   }
     
-    if (!selectedFile) {
-      alert('Please select a file first');
-      return;
-    }
+  //   if (!selectedFile) {
+  //     alert('Please select a file first');
+  //     return;
+  //   }
     
-    const result = await uploadToIPFS(selectedFile);
-    if (result.success) {
-      alert(`File uploaded to IPFS successfully!\nHash: ${result.hash}\nURL: ${result.url}`);
-      setSelectedFile(null);
-    } else {
-      alert(`Upload failed: ${result.error}`);
-    }
-  };
+  //   const result = await uploadToIPFS(selectedFile);
+  //   if (result.success) {
+  //     alert(`File uploaded to IPFS successfully!\nHash: ${result.hash}\nURL: ${result.url}`);
+  //     setSelectedFile(null);
+  //   } else {
+  //     alert(`Upload failed: ${result.error}`);
+  //   }
+  // };
 
+const handleUpload = async () => {
+  if (!isWalletConnected) {
+    alert('Please connect your wallet first');
+    return;
+  }
+  
+  if (!selectedFile) {
+    alert('Please select a file first');
+    return;
+  }
+  
+  try {
+    // Upload to IPFS
+    const result = await uploadToIPFS(selectedFile);
+    if (!result.success) {
+      alert(`Upload failed: ${result.error}`);
+      return;
+    }
+    
+    // Store hash on blockchain
+    const txHash = await storeDocumentHash(result.hash);
+    
+    alert(`Success!\nIPFS Hash: ${result.hash}\nTransaction: ${txHash}`);
+    setSelectedFile(null);
+  } catch (error) {
+    console.error('Error:', error);
+    alert(`Error: ${error.message}`);
+  }
+};
   return (
     <div className="min-h-screen bg-gray-50 relative">
       <div className="absolute top-4 right-4">
