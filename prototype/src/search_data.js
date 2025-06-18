@@ -104,7 +104,17 @@ export default function SearchData({ onBack }) {
                             </h4>
                             
                             <p className="text-gray-600 mb-3">
-                              {result.summary || result.description || result.content || 'No summary available'}
+                              {result.summary || 
+                               result.description || 
+                               result.content || 
+                               result.text ||
+                               result.document_summary ||
+                               result.doc_summary ||
+                               result.metadata?.summary ||
+                               result.metadata?.description ||
+                               result.pageContent ||
+                               result.document ||
+                               'No summary available'}
                             </p>
                             
                             <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 mb-4">
