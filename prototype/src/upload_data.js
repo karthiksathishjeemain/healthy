@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Upload, Wallet, FileText } from 'lucide-react';
 import { uploadToIPFS } from './UploadFile'; 
 import { storeDocumentHash } from './contractService';
+import { encryptFile } from './encryptionUtils.js';
 
 export default function UploadData({ onBack, isWalletConnected, walletAddress, onWalletConnect }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -36,7 +37,10 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
     setIsUploading(true);
     
     try {
-      const result = await uploadToIPFS(selectedFile);
+      const fileBuffer = await selectedFile.arrayBuffer();
+      const encryptedFile = encryptFile(new Uint8Array(fileBuffer));
+      
+      const result = await uploadToIPFS(encryptedFile);
       if (!result.success) {
         alert(`Upload failed: ${result.error}`);
         setIsUploading(false);
@@ -51,10 +55,11 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
         fileType: selectedFile.type,
         uploadDate: new Date().toISOString(),
         walletAddress: walletAddress,
-        transactionHash: txHash
+        transactionHash: txHash,
+        encrypted: true
       };
 
-      const storeResponse = await fetch('http://localhost:3000/store', {
+      const storeResponse = await fetch('http://localhost:3001/store', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
