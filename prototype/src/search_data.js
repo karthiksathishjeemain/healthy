@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { decryptFile } from './encryptionUtils';
+import { purchaseDocument, getDocumentPrice } from './contractService';
 
 export default function SearchData({ onBack }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [downloading, setDownloading] = useState({});
+  const [purchasing, setPurchasing] = useState({});
 
   const handleSearchSubmit = async () => {
     if (!searchQuery.trim()) {
@@ -39,13 +41,28 @@ export default function SearchData({ onBack }) {
     }
   };
 
-  const handleDownload = async (result, index) => {
+  const handlePurchaseAndDownload = async (result, index) => {
     const cid = result.cid || result.ipfsHash || result.hash;
     if (!cid) return;
 
-    setDownloading(prev => ({ ...prev, [index]: true }));
+    setPurchasing(prev => ({ ...prev, [index]: true }));
     
     try {
+      const price = result.metadata?.price || await getDocumentPrice(cid);
+      
+      if (!price || parseFloat(price) <= 0) {
+        alert('Unable to get document price');
+        return;
+      }
+
+      const confirmed = window.confirm(`Purchase this document for ${price} ETH?`);
+      if (!confirmed) return;
+
+      const txHash = await purchaseDocument(cid, price);
+      console.log('Purchase successful:', txHash);
+
+      setDownloading(prev => ({ ...prev, [index]: true }));
+      
       const response = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
       const encryptedData = await response.text();
       
@@ -64,9 +81,10 @@ export default function SearchData({ onBack }) {
       URL.revokeObjectURL(url);
       
     } catch (error) {
-      console.error('Download Error:', error);
-      alert(`Download Error: ${error.message}`);
+      console.error('Purchase/Download Error:', error);
+      alert(`Error: ${error.message}`);
     } finally {
+      setPurchasing(prev => ({ ...prev, [index]: false }));
       setDownloading(prev => ({ ...prev, [index]: false }));
     }
   };
@@ -167,6 +185,11 @@ export default function SearchData({ onBack }) {
                                   <span className="font-medium">Uploaded:</span> {new Date(result.metadata.uploadDate).toLocaleDateString()}
                                 </div>
                               )}
+                              {result.metadata?.price && (
+                                <div>
+                                  <span className="font-medium">Price:</span> {result.metadata.price} ETH
+                                </div>
+                              )}
                               {result.score && (
                                 <div>
                                   <span className="font-medium">Relevance:</span> {(result.score * 100).toFixed(1)}%
@@ -190,11 +213,11 @@ export default function SearchData({ onBack }) {
                             
                             {(result.cid || result.ipfsHash || result.hash) && (
                               <button
-                                onClick={() => handleDownload(result, index)}
-                                disabled={downloading[index]}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                                onClick={() => handlePurchaseAndDownload(result, index)}
+                                disabled={purchasing[index] || downloading[index]}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
                               >
-                                {downloading[index] ? 'Downloading...' : 'Download'}
+                                {purchasing[index] ? 'Purchasing...' : downloading[index] ? 'Downloading...' : `Purchase & Download (${result.metadata?.price || '...'} ETH)`}
                               </button>
                             )}
                           </div>

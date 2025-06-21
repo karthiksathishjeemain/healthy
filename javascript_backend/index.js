@@ -11,7 +11,7 @@ const qdrant = new QdrantClient({
     url: 'https://ad266a9c-bf9e-439c-a570-f330965ee8e2.europe-west3-0.gcp.cloud.qdrant.io:6333',
     apiKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.2PYuI6M6Tz1ZSQndg6EeuqwpGZIrOtslYLGDO-_SBPY',
 });
-const COLLECTION_NAME = "user_data";
+const COLLECTION_NAME = "new_user_data";
 
 async function ensureCollection() {
     try {
