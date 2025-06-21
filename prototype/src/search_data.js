@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { decryptFile } from './encryptionUtils';
 
 export default function SearchData({ onBack }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [downloading, setDownloading] = useState({});
 
   const handleSearchSubmit = async () => {
     if (!searchQuery.trim()) {
@@ -13,7 +15,7 @@ export default function SearchData({ onBack }) {
 
     setIsSearching(true);
     try {
-      const response = await fetch('http://localhost:3000/search', {
+      const response = await fetch('http://localhost:3001/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,6 +36,38 @@ export default function SearchData({ onBack }) {
       alert(`Search Error: ${error.message}`);
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handleDownload = async (result, index) => {
+    const cid = result.cid || result.ipfsHash || result.hash;
+    if (!cid) return;
+
+    setDownloading(prev => ({ ...prev, [index]: true }));
+    
+    try {
+      const response = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
+      const encryptedData = await response.text();
+      
+      const decryptedData = decryptFile(encryptedData);
+      const bytes = new Uint8Array(atob(decryptedData).split('').map(char => char.charCodeAt(0)));
+      
+      const blob = new Blob([bytes], { type: result.metadata?.fileType || 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = result.metadata?.fileName || `document_${index + 1}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Download Error:', error);
+      alert(`Download Error: ${error.message}`);
+    } finally {
+      setDownloading(prev => ({ ...prev, [index]: false }));
     }
   };
 
@@ -155,14 +189,13 @@ export default function SearchData({ onBack }) {
                             </div>
                             
                             {(result.cid || result.ipfsHash || result.hash) && (
-                              <a
-                                href={`https://gateway.pinata.cloud/ipfs/${result.cid || result.ipfsHash || result.hash}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                              <button
+                                onClick={() => handleDownload(result, index)}
+                                disabled={downloading[index]}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
                               >
-                                Download
-                              </a>
+                                {downloading[index] ? 'Downloading...' : 'Download'}
+                              </button>
                             )}
                           </div>
                         </div>
