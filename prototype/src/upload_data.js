@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Wallet, FileText } from 'lucide-react';
+import { Upload, Wallet, FileText, DollarSign } from 'lucide-react';
 import { uploadToIPFS } from './UploadFile'; 
 import { storeDocumentHash } from './contractService';
 import { encryptFile } from './encryptionUtils.js';
@@ -7,6 +7,7 @@ import { encryptFile } from './encryptionUtils.js';
 export default function UploadData({ onBack, isWalletConnected, walletAddress, onWalletConnect }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [summary, setSummary] = useState('');
+  const [price, setPrice] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (event) => {
@@ -16,6 +17,10 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
 
   const handleSummaryChange = (event) => {
     setSummary(event.target.value);
+  };
+
+  const handlePriceChange = (event) => {
+    setPrice(event.target.value);
   };
 
   const handleUpload = async () => {
@@ -33,6 +38,11 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
       alert('Please provide a summary of your document');
       return;
     }
+
+    if (!price || parseFloat(price) <= 0) {
+      alert('Please enter a valid price in ETH');
+      return;
+    }
     
     setIsUploading(true);
     
@@ -47,7 +57,7 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
         return;
       }
       
-      const txHash = await storeDocumentHash(result.hash);
+      const txHash = await storeDocumentHash(result.hash, price);
       
       const metadata = {
         fileName: selectedFile.name,
@@ -56,7 +66,8 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
         uploadDate: new Date().toISOString(),
         walletAddress: walletAddress,
         transactionHash: txHash,
-        encrypted: true
+        encrypted: true,
+        price: price
       };
 
       const storeResponse = await fetch('http://localhost:3001/store', {
@@ -77,10 +88,11 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
 
       const storeResult = await storeResponse.json();
       
-      alert(`Success!\nIPFS Hash: ${result.hash}\nTransaction: ${txHash}\nStored in database: ${storeResult.message}`);
+      alert(`Success!\nIPFS Hash: ${result.hash}\nTransaction: ${txHash}\nPrice: ${price} ETH\nStored in database: ${storeResult.message}`);
       
       setSelectedFile(null);
       setSummary('');
+      setPrice('');
       
     } catch (error) {
       console.error('Error:', error);
@@ -180,9 +192,30 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
             </p>
           </div>
 
+          <div className="mb-4">
+            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+              <DollarSign size={16} className="inline mr-1" />
+              Price (ETH)
+            </label>
+            <input
+              id="price"
+              type="number"
+              step="0.001"
+              min="0"
+              value={price}
+              onChange={handlePriceChange}
+              placeholder="0.01"
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!isWalletConnected ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              disabled={!isWalletConnected}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Set the price users will pay to download your document
+            </p>
+          </div>
+
           <button
             onClick={handleUpload}
-            disabled={!selectedFile || !isWalletConnected || !summary.trim() || isUploading}
+            disabled={!selectedFile || !isWalletConnected || !summary.trim() || !price || parseFloat(price) <= 0 || isUploading}
             className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isUploading ? 'Uploading...' : 'Upload to IPFS & Store'}
