@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Wallet, Search, Upload } from 'lucide-react';
+import { Wallet, Search, Upload, User, ChevronDown } from 'lucide-react';
 import SearchData from './search_data';
 import UploadData from './upload_data';
+import Dashboard from './Dashboard';
 
 export default function App() {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
+  const [fullWalletAddress, setFullWalletAddress] = useState('');
   const [currentView, setCurrentView] = useState('main');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleWalletConnect = async () => {
     try {
@@ -23,6 +26,7 @@ export default function App() {
         const address = accounts[0];
         const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
         setWalletAddress(shortAddress);
+        setFullWalletAddress(address);
         setIsWalletConnected(true);
       } else {
         alert('Please install MetaMask or another Web3 wallet');
@@ -38,6 +42,9 @@ export default function App() {
   const handleDisconnect = () => {
     setIsWalletConnected(false);
     setWalletAddress('');
+    setFullWalletAddress('');
+    setIsDropdownOpen(false);
+    setCurrentView('main');
   };
 
   const handleSearch = () => {
@@ -46,6 +53,11 @@ export default function App() {
 
   const handleUpload = () => {
     setCurrentView('upload');
+  };
+
+  const handleDashboard = () => {
+    setCurrentView('dashboard');
+    setIsDropdownOpen(false);
   };
 
   const handleBackToMain = () => {
@@ -61,8 +73,18 @@ export default function App() {
       <UploadData 
         onBack={handleBackToMain}
         isWalletConnected={isWalletConnected}
-        walletAddress={walletAddress}
+        walletAddress={fullWalletAddress}
         onWalletConnect={handleWalletConnect}
+      />
+    );
+  }
+
+  if (currentView === 'dashboard') {
+    return (
+      <Dashboard 
+        onBack={handleBackToMain}
+        isWalletConnected={isWalletConnected}
+        walletAddress={fullWalletAddress}
       />
     );
   }
@@ -71,16 +93,34 @@ export default function App() {
     <div className="min-h-screen bg-gray-50">
       <div className="absolute top-4 right-4">
         {isWalletConnected ? (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">
-              {walletAddress}
-            </span>
+          <div className="relative">
             <button
-              onClick={handleDisconnect}
-              className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors shadow-sm"
             >
-              Disconnect
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <User size={16} className="text-white" />
+              </div>
+              <span className="text-sm text-gray-700">{walletAddress}</span>
+              <ChevronDown size={16} className={`text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
+
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                <button
+                  onClick={handleDashboard}
+                  className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                >
+                  View My Profile
+                </button>
+                <button
+                  onClick={handleDisconnect}
+                  className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  Disconnect Wallet
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <button
@@ -126,6 +166,13 @@ export default function App() {
           )}
         </div>
       </div>
+
+      {isDropdownOpen && (
+        <div 
+          className="fixed inset-0 z-0" 
+          onClick={() => setIsDropdownOpen(false)}
+        />
+      )}
     </div>
   );
 }
