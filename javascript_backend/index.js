@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const axios = require("axios");
 const { QdrantClient } = require("@qdrant/js-client-rest");
@@ -8,8 +9,8 @@ const port = 3001;
 app.use(cors());
 app.use(express.json());
 const qdrant = new QdrantClient({
-    url: 'https://ad266a9c-bf9e-439c-a570-f330965ee8e2.europe-west3-0.gcp.cloud.qdrant.io:6333',
-    apiKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.2PYuI6M6Tz1ZSQndg6EeuqwpGZIrOtslYLGDO-_SBPY',
+     url: process.env.QDRANT_URL,
+    apiKey: process.env.QDRANT_API_KEY,
 });
 const COLLECTION_NAME = "new_user_data";
 
