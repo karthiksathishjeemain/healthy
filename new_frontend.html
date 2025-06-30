@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medical Data Uploader</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f3f4f6;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .heading {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .form {
+      display: grid;
+      gap: 1rem;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    input[type='text'],
+    textarea,
+    select,
+    input[type='file'] {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      padding: 0.8rem;
+      background: #2c7be5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background: #1a5edb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="heading">Upload Medical Data</h1>
+    <form class="form" onsubmit="event.preventDefault();">
+      <label>Uploader Type</label>
+      <select id="uploaderType" onchange="handleUploaderTypeChange()">
+        <option value="individual">Individual</option>
+        <option value="institution">Institution</option>
+      </select>
+
+      <label>Dataset Title</label>
+      <input type="text" placeholder="e.g., Chronic Kidney Disease History" />
+
+      <label>Description</label>
+      <textarea placeholder="Describe the dataset..."></textarea>
+
+      <label>Disease Tags</label>
+      <input type="text" placeholder="e.g., Diabetes, Kidney Failure" />
+
+      <div class="form-row">
+        <div>
+          <label>Age Range</label>
+          <input type="text" placeholder="e.g., 30-40" />
+        </div>
+        <div>
+          <label>Gender</label>
+          <select>
+            <option value="">Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Data Source</label>
+      <select>
+        <option value="">Choose source</option>
+        <option value="wearables">Wearables</option>
+        <option value="ehr">Hospital EHR</option>
+        <option value="lab">Lab Reports</option>
+        <option value="genomics">Genomic Data</option>
+        <option value="imaging">Imaging (CT, MRI)</option>
+      </select>
+
+      <label>Data File Upload</label>
+      <input type="file" multiple />
+
+      <div id="institutionFields" style="display: none;">
+        <label>Anonymization Method</label>
+        <select>
+          <option value="safe-harbor">HIPAA Safe Harbor</option>
+          <option value="expert-determination">Expert Determination</option>
+        </select>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="phiRemoved" />
+          <label for="phiRemoved">I confirm PHI has been removed</label>
+        </div>
+      </div>
+
+      <label>License Type</label>
+      <select>
+        <option value="research">Research</option>
+        <option value="commercial">Commercial</option>
+        <option value="personal">Personal Use Only</option>
+      </select>
+
+      <button type="submit">Submit Dataset</button>
+    </form>
+  </div>
+
+  <script>
+    function handleUploaderTypeChange() {
+      const type = document.getElementById('uploaderType').value;
+      const institutionFields = document.getElementById('institutionFields');
+      institutionFields.style.display = type === 'institution' ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>
