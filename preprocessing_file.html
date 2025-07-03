@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHI Data Replacer - Crypto Wallet Secured</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .wallet-section {
+            background: #f8f9ff;
+            border: 2px solid #e3e6ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .wallet-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dc3545;
+        }
+        .status-indicator.connected {
+            background: #28a745;
+        }
+        .wallet-address {
+            font-family: 'Courier New', monospace;
+            background: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            word-break: break-all;
+            font-size: 0.9em;
+        }
+        .connect-wallet-btn {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .connect-wallet-btn:hover {
+            transform: translateY(-2px);
+        }
+        .disconnect-wallet-btn {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+            margin-left: 10px;
+        }
+        .disconnect-wallet-btn:hover {
+            transform: translateY(-2px);
+        }
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        }
+        .upload-area:hover {
+            border-color: #007bff;
+            background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
+        }
+        .upload-area.dragover {
+            border-color: #007bff;
+            background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
+            transform: scale(1.02);
+        }
+        .upload-area.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .upload-btn {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+        .process-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            display: none;
+            transition: transform 0.2s;
+        }
+        .process-btn:hover {
+            transform: translateY(-2px);
+        }
+        .process-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            font-weight: 500;
+        }
+        .status.success {
+            background: linear-gradient(45deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+        .status.error {
+            background: linear-gradient(45deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+        .status.info {
+            background: linear-gradient(45deg, #d1ecf1, #bee5eb);
+            color: #0c5460;
+            border: 2px solid #17a2b8;
+        }
+        .download-btn {
+            background: linear-gradient(45deg, #6f42c1, #e83e8c);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+            display: none;
+            transition: transform 0.2s;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 PHI Data Replacer</h1>
+        <div class="subtitle">Crypto Wallet Secured • Blockchain-Verified IDs</div>
+        
+        <div class="wallet-section">
+            <h3>🦊 Wallet Connection</h3>
+            <div class="wallet-status">
+                <div class="status-indicator" id="walletIndicator"></div>
+                <span id="walletStatusText">Wallet not connected</span>
+            </div>
+            <div id="walletAddress" class="wallet-address" style="display: none;"></div>
+            <button class="connect-wallet-btn" id="connectWalletBtn">Connect MetaMask Wallet</button>
+            <button class="disconnect-wallet-btn" id="disconnectWalletBtn" style="display: none;">🔌 Disconnect Wallet</button>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <p>📁 Drag and drop your Excel file here, or</p>
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose File</button>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" />
+            <p><small>🔒 Your wallet must be connected to process files</small></p>
+        </div>
+        
+        <button class="process-btn" id="processBtn">🚀 Process File with Wallet Security</button>
+        
+        <div class="status" id="status"></div>
+        
+        <button class="download-btn" id="downloadBtn">📥 Download Secured File</button>
+    </div>
+
+    <script>
+        let uploadedFile = null;
+        let processedWorkbook = null;
+        let walletAddress = null;
+        let walletConnected = false;
+
+        const phiKeywords = [
+            'dob', 'date of birth', 'address', 'phone', 'mobile', 'email',
+            'ssn', 'social security', 'mrn', 'medical record', 'health plan',
+            'license', 'account number', 'ip address', 'device id', 'biometric',
+            'photo', 'facial', 'fingerprint', 'signature', 'first name', 'last name',
+            'name'
+        ];
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const processBtn = document.getElementById('processBtn');
+        const statusDiv = document.getElementById('status');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const connectWalletBtn = document.getElementById('connectWalletBtn');
+        const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
+        const walletIndicator = document.getElementById('walletIndicator');
+        const walletStatusText = document.getElementById('walletStatusText');
+        const walletAddressDiv = document.getElementById('walletAddress');
+
+        updateUIState();
+
+        function disconnectWallet() {
+            walletConnected = false;
+            walletAddress = null;
+            uploadedFile = null;
+            processedWorkbook = null;
+            
+            walletIndicator.classList.remove('connected');
+            walletStatusText.textContent = 'Wallet not connected';
+            walletAddressDiv.style.display = 'none';
+            connectWalletBtn.textContent = 'Connect MetaMask Wallet';
+            connectWalletBtn.disabled = false;
+            connectWalletBtn.style.display = 'inline-block';
+            disconnectWalletBtn.style.display = 'none';
+            
+            processBtn.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            statusDiv.style.display = 'none';
+            fileInput.value = '';
+            
+            updateUIState();
+            showStatus('Wallet disconnected successfully', 'info');
+        }
+
+        connectWalletBtn.addEventListener('click', connectWallet);
+        disconnectWalletBtn.addEventListener('click', disconnectWallet);
+
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                showStatus('MetaMask is not installed. Please install MetaMask to continue.', 'error');
+                return;
+            }
+
+            try {
+                const accounts = await window.ethereum.request({ 
+                    method: 'eth_requestAccounts' 
+                });
+                
+                if (accounts && accounts.length > 0) {
+                    walletAddress = accounts[0];
+                    walletConnected = true;
+                    updateWalletUI();
+                    updateUIState();
+                    
+                    showStatus(`Wallet connected successfully! Address: ${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`, 'success');
+                } else {
+                    showStatus('No accounts found. Please make sure MetaMask is unlocked.', 'error');
+                }
+            } catch (error) {
+                console.error('Error connecting wallet:', error);
+                if (error.code === 4001) {
+                    showStatus('Connection request was rejected by user.', 'error');
+                } else {
+                    showStatus('Failed to connect wallet. Please try again.', 'error');
+                }
+            }
+        }
+
+        function updateWalletUI() {
+            if (walletConnected) {
+                walletIndicator.classList.add('connected');
+                walletStatusText.textContent = 'Wallet connected';
+                walletAddressDiv.textContent = walletAddress;
+                walletAddressDiv.style.display = 'block';
+                connectWalletBtn.textContent = '✅ Wallet Connected';
+                connectWalletBtn.disabled = true;
+                connectWalletBtn.style.display = 'none';
+                disconnectWalletBtn.style.display = 'inline-block';
+            }
+        }
+
+        function updateUIState() {
+            if (!walletConnected) {
+                uploadArea.classList.add('disabled');
+                processBtn.disabled = true;
+            } else {
+                uploadArea.classList.remove('disabled');
+                processBtn.disabled = false;
+            }
+        }
+
+        function generateWalletBasedId(input, index) {
+            if (!walletAddress) return `ID_${index}`;
+            
+            const combined = `${walletAddress.toLowerCase()}_${input}`;
+            const hash = CryptoJS.SHA256(combined).toString();
+            const shortHash = hash.substring(0, 8);
+            
+            return `WID_${shortHash}`;
+        }
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (walletConnected) {
+                uploadArea.classList.add('dragover');
+            }
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (walletConnected && e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (walletConnected && e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!walletConnected) {
+                showStatus('Please connect your wallet first', 'error');
+                return;
+            }
+
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                showStatus('Please select an Excel file (.xlsx or .xls)', 'error');
+                return;
+            }
+            
+            uploadedFile = file;
+            showStatus(`File "${file.name}" uploaded successfully! Ready to process with wallet security.`, 'success');
+            processBtn.style.display = 'inline-block';
+        }
+
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        processBtn.addEventListener('click', processFile);
+
+        async function processFile() {
+            if (!walletConnected) {
+                showStatus('Please connect your wallet first', 'error');
+                return;
+            }
+
+            if (!uploadedFile) {
+                showStatus('Please upload a file first', 'error');
+                return;
+            }
+
+            showStatus('🔐 Processing file with wallet-based security...', 'info');
+
+            try {
+                const arrayBuffer = await uploadedFile.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+                const allIdentifiers = new Set();
+                const sheetColumnRefs = {};
+
+                workbook.SheetNames.forEach(sheetName => {
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    if (jsonData.length === 0) return;
+                    
+                    const headers = jsonData[0] || [];
+                    let patientIdCol = null;
+                    let firstNameCol = null;
+                    let lastNameCol = null;
+
+                    // Check for Patient ID column first
+                    headers.forEach((header, index) => {
+                        if (header && typeof header === 'string') {
+                            const headerLower = header.toLowerCase();
+                            if (headerLower.includes('patient') && headerLower.includes('id')) {
+                                patientIdCol = index;
+                            }
+                        }
+                    });
+
+                    // If no Patient ID, look for name columns
+                    if (patientIdCol === null) {
+                        headers.forEach((header, index) => {
+                            if (header && typeof header === 'string') {
+                                const headerLower = header.toLowerCase();
+                                if (headerLower.includes('first') && headerLower.includes('name')) {
+                                    firstNameCol = index;
+                                }
+                                if (headerLower.includes('last') && headerLower.includes('name')) {
+                                    lastNameCol = index;
+                                }
+                            }
+                        });
+                    }
+
+                    // Collect identifiers based on what's available
+                    if (patientIdCol !== null) {
+                        // Use Patient ID
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (row && row[patientIdCol]) {
+                                const patientId = String(row[patientIdCol]).toLowerCase().trim();
+                                allIdentifiers.add(patientId);
+                            }
+                        }
+                        sheetColumnRefs[sheetName] = { patientIdCol };
+                    } else if (firstNameCol !== null && lastNameCol !== null) {
+                        // Use First Name + Last Name
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (row && row[firstNameCol] && row[lastNameCol]) {
+                                const firstName = String(row[firstNameCol]).toLowerCase().trim();
+                                const lastName = String(row[lastNameCol]).toLowerCase().trim();
+                                const fullName = `${firstName}_${lastName}`;
+                                allIdentifiers.add(fullName);
+                            }
+                        }
+                        sheetColumnRefs[sheetName] = { firstNameCol, lastNameCol };
+                    }
+                });
+
+                const sortedIdentifiers = Array.from(allIdentifiers).sort();
+                const identifierToId = {};
+                sortedIdentifiers.forEach((identifier, index) => {
+                    identifierToId[identifier] = generateWalletBasedId(identifier, index + 1);
+                });
+
+                const cleanedWorkbook = XLSX.utils.book_new();
+
+                workbook.SheetNames.forEach(sheetName => {
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    if (jsonData.length === 0) {
+                        XLSX.utils.book_append_sheet(cleanedWorkbook, worksheet, sheetName);
+                        return;
+                    }
+
+                    const headers = jsonData[0] || [];
+                    const cleanedData = jsonData.map(row => [...row]);
+
+                    if (sheetColumnRefs[sheetName]) {
+                        const sheetRefs = sheetColumnRefs[sheetName];
+
+                        const columnsToMask = [];
+                        headers.forEach((header, index) => {
+                            if (header && typeof header === 'string') {
+                                const headerLower = header.toLowerCase();
+                                const isPatientIdColumn = index === sheetRefs.patientIdCol;
+                                const isNameColumn = index === sheetRefs.firstNameCol || index === sheetRefs.lastNameCol;
+                                const isPhiColumn = phiKeywords.some(keyword => {
+                                    return headerLower.includes(keyword) || headerLower.replace(/\s+/g, '').includes(keyword.replace(/\s+/g, ''));
+                                });
+                                
+                                if (isPatientIdColumn || isNameColumn || isPhiColumn) {
+                                    columnsToMask.push(index);
+                                }
+                            }
+                        });
+
+                        for (let i = 1; i < cleanedData.length; i++) {
+                            const row = cleanedData[i];
+                            let id = null;
+
+                            if (sheetRefs.patientIdCol !== undefined && row && row[sheetRefs.patientIdCol]) {
+                                // Use Patient ID
+                                const patientId = String(row[sheetRefs.patientIdCol]).toLowerCase().trim();
+                                id = identifierToId[patientId];
+                            } else if (sheetRefs.firstNameCol !== undefined && sheetRefs.lastNameCol !== undefined && 
+                                       row && row[sheetRefs.firstNameCol] && row[sheetRefs.lastNameCol]) {
+                                // Use First Name + Last Name
+                                const firstName = String(row[sheetRefs.firstNameCol]).toLowerCase().trim();
+                                const lastName = String(row[sheetRefs.lastNameCol]).toLowerCase().trim();
+                                const fullName = `${firstName}_${lastName}`;
+                                id = identifierToId[fullName];
+                            }
+
+                            if (id) {
+                                columnsToMask.forEach(colIndex => {
+                                    if (row[colIndex] !== undefined) {
+                                        row[colIndex] = id;
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                    const newWorksheet = XLSX.utils.aoa_to_sheet(cleanedData);
+                    XLSX.utils.book_append_sheet(cleanedWorkbook, newWorksheet, sheetName);
+                });
+
+                processedWorkbook = cleanedWorkbook;
+                
+                const walletShort = `${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`;
+                showStatus(`🎉 File processed successfully! PHI data replaced with wallet-secured IDs (${walletShort})`, 'success');
+                downloadBtn.style.display = 'inline-block';
+
+            } catch (error) {
+                console.error('Error processing file:', error);
+                showStatus('❌ Error processing file. Please check the file format and try again.', 'error');
+            }
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            if (!processedWorkbook) {
+                showStatus('No processed file available for download', 'error');
+                return;
+            }
+
+            const wbout = XLSX.write(processedWorkbook, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/octet-stream' });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            const walletShort = walletAddress.substring(0, 6);
+            a.download = `phi_secured_${walletShort}_${Date.now()}.xlsx`;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus('📥 Wallet-secured file downloaded successfully!', 'success');
+        });
+
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    disconnectWallet();
+                } else if (accounts[0] !== walletAddress) {
+                    walletAddress = accounts[0];
+                    updateWalletUI();
+                    showStatus(`Switched to account: ${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`, 'info');
+                }
+            });
+
+            window.ethereum.on('disconnect', () => {
+                disconnectWallet();
+            });
+        }
+    </script>
+</body>
+</html>
