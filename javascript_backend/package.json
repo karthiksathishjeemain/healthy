@@ -1,22 +1,34 @@
 {
-  "name": "javascript_backend",
+  "name": "combined-backend-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "Combined backend with vector search and PHI anonymization",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "qdrant",
+    "vector-search",
+    "phi",
+    "anonymization",
+    "excel",
+    "api"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@qdrant/js-client-rest": "^1.14.1",
-    "axios": "^1.9.0",
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "@qdrant/js-client-rest": "^1.7.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "pg": "^8.16.0",
-    "qdrant": "^1.3.1"
+    "dotenv": "^16.3.1",
+    "multer": "^1.4.5-lts.1",
+    "xlsx": "^0.18.5",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }
