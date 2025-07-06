@@ -106,8 +106,6 @@ The project consists of multiple components:
 4. **Access the application**
    
    Open your browser and navigate to `http://localhost:3000`
-   Note:  In order to interact with the new_frontend.html file, open the file and press the "Go Live" button which is situated in the bottom right corner on VS Code.
-   In order to test the anonymization logic, please open the file preprocessing_file.html and hit "Go Live" as described above.
 ## Smart Contract
 
 The project uses a smart contract (`DocumentStorage.sol`) deployed on the Ethereum blockchain. Key functionalities include:
