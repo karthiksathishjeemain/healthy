@@ -23,6 +23,23 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
     setPrice(event.target.value);
   };
 
+  const anonymizeFile = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('http://localhost:3001/anonymize', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error('File anonymization failed');
+    }
+
+    const blob = await response.blob();
+    return new File([blob], `anonymized_${file.name}`, { type: file.type });
+  };
+
   const handleUpload = async () => {
     if (!isWalletConnected) {
       alert('Please connect your wallet first');
@@ -47,7 +64,13 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
     setIsUploading(true);
     
     try {
-      const fileBuffer = await selectedFile.arrayBuffer();
+      let fileToUpload = selectedFile;
+      
+      if (selectedFile.name.match(/\.(xlsx|xls)$/i)) {
+        fileToUpload = await anonymizeFile(selectedFile);
+      }
+      
+      const fileBuffer = await fileToUpload.arrayBuffer();
       const encryptedFile = encryptFile(new Uint8Array(fileBuffer));
       
       const result = await uploadToIPFS(encryptedFile);
@@ -60,9 +83,9 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
       const txHash = await storeDocumentHash(result.hash, price);
       
       const metadata = {
-        fileName: selectedFile.name,
-        fileSize: selectedFile.size,
-        fileType: selectedFile.type,
+        fileName: fileToUpload.name,
+        fileSize: fileToUpload.size,
+        fileType: fileToUpload.type,
         uploadDate: new Date().toISOString(),
         walletAddress: walletAddress,
         transactionHash: txHash,
