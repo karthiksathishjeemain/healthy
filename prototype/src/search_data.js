@@ -17,7 +17,7 @@ export default function SearchData({ onBack }) {
 
     setIsSearching(true);
     try {
-      const response = await fetch('http://localhost:3001/search', {
+      const response = await fetch('http://localhost:3002/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

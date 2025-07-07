@@ -93,7 +93,7 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
         price: price
       };
 
-      const storeResponse = await fetch('http://localhost:3001/store', {
+      const storeResponse = await fetch('http://localhost:3002/store', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
