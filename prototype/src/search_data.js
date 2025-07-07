@@ -17,7 +17,8 @@ export default function SearchData({ onBack }) {
 
     setIsSearching(true);
     try {
-      const response = await fetch('http://localhost:3002/search', {
+      const backendUrl = process.env.REACT_APP_PYTHON_BACKEND_URL || 'http://localhost:3002';
+      const response = await fetch(`${backendUrl}/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -5,11 +5,13 @@ Bio-Block is a decentralized document management system that leverages blockchai
 ## Features
 
 - **Document Upload**: Upload documents to IPFS with secure, decentralized storage
+- **Document Anonymization**: Automatic PHI anonymization for Excel files in healthcare
 - **Blockchain Verification**: Store document hashes on the Ethereum blockchain for tamper-proof verification
 - **Semantic Search**: Find documents using natural language queries with AI-powered vector search
 - **User Dashboard**: View all your documents in one place with detailed metadata
 - **Document Marketplace**: Set prices for documents and earn from document purchases
 - **Wallet Integration**: Seamless connection with Ethereum wallets (like MetaMask)
+- **Environment Flexibility**: Easy switching between local and production environments
 
 ## Project Structure
 
@@ -91,8 +93,13 @@ The project consists of multiple components:
    ```env
    REACT_APP_PINATA_JWT=your_pinata_jwt_key
    REACT_APP_ENCRYPTION_KEY=your_32_byte_encryption_key
+   REACT_APP_PYTHON_BACKEND_URL=your_deployed_python_backend_url
+   REACT_APP_JS_BACKEND_URL=http://localhost:3001
    ```
-   *Note: Generate a secure 32-byte encryption key for document encryption*
+   *Note: 
+   - Generate a secure 32-byte encryption key for document encryption
+   - Replace `your_deployed_python_backend_url` with your actual deployment URL
+   - JavaScript backend URL can be updated when deployed*
 
 3. **Install frontend dependencies**
    ```bash
@@ -114,6 +121,23 @@ The project consists of multiple components:
 
 ### Running the Application
 
+**Option 1: Using Deployed Python Backend**
+
+1. **Start the JavaScript backend (port 3001)**
+   ```bash
+   cd javascript_backend
+   node index.js
+   ```
+
+2. **Start the React frontend**
+   ```bash
+   cd prototype
+   npm start
+   ```
+   *The frontend will automatically use the deployed Python backend on Render*
+
+**Option 2: Full Local Development**
+
 1. **Start the Python backend (port 3002)**
    ```bash
    cd python_backend
@@ -131,6 +155,7 @@ The project consists of multiple components:
    cd prototype
    npm start
    ```
+   *Update environment variables to use localhost URLs for local development*
 
 4. **Access the application**
    
@@ -151,6 +176,17 @@ The project consists of multiple components:
 - `POST /store` - Store document summaries and metadata in ChromaDB
 - `POST /search` - Search documents using natural language queries
 - Returns similarity scores, document metadata, and summaries
+
+## Environment Configuration
+
+The application uses environment variables to configure backend URLs:
+
+- **REACT_APP_PYTHON_BACKEND_URL**: Python backend URL (deployed on Render)
+- **REACT_APP_JS_BACKEND_URL**: JavaScript backend URL (localhost or deployed)
+- **REACT_APP_PINATA_JWT**: Pinata API key for IPFS uploads
+- **REACT_APP_ENCRYPTION_KEY**: 32-byte key for document encryption
+
+This allows seamless switching between local development and production environments.
 
 ## How It Works
 
@@ -178,10 +214,23 @@ The project uses a smart contract (`DocumentStorage.sol`) deployed on the Ethere
 
 ## Deployment
 
-- Frontend can be deployed to Vercel or Netlify
-- Python backend can be deployed to Vercel with the included `vercel.json` configuration
-- JavaScript backend can be deployed to Heroku or similar services
-- Smart contract should be deployed to Ethereum mainnet for production use
+### Current Deployment Status
+- **Python Backend**: 🔄 Can be deployed to Render, Vercel, or similar platforms
+- **JavaScript Backend**: 🔄 Can be deployed to Heroku, Render, or similar services  
+- **Frontend**: 🔄 Can be deployed to Vercel, Netlify, or similar platforms
+
+### Deployment Options
+- **Frontend**: Can be deployed to Vercel or Netlify
+- **Python Backend**: Already deployed to Render with `vercel.json` configuration
+- **JavaScript Backend**: Can be deployed to Heroku, Render, or similar services
+- **Smart Contract**: Should be deployed to Ethereum mainnet for production use
+
+### Environment Variables for Production
+Update the `.env` file with production URLs when deploying:
+```env
+REACT_APP_PYTHON_BACKEND_URL=https://your-python-backend.onrender.com
+REACT_APP_JS_BACKEND_URL=https://your-js-backend.herokuapp.com
+```
 
 ## License
 

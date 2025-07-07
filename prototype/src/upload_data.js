@@ -27,7 +27,8 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('http://localhost:3001/anonymize', {
+    const jsBackendUrl = process.env.REACT_APP_JS_BACKEND_URL || 'http://localhost:3001';
+    const response = await fetch(`${jsBackendUrl}/anonymize`, {
       method: 'POST',
       body: formData
     });
@@ -93,7 +94,8 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
         price: price
       };
 
-      const storeResponse = await fetch('http://localhost:3002/store', {
+      const pythonBackendUrl = process.env.REACT_APP_PYTHON_BACKEND_URL || 'http://localhost:3002';
+      const storeResponse = await fetch(`${pythonBackendUrl}/store`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
