@@ -2,6 +2,12 @@
 
 Bio-Block is a decentralized document management system that leverages blockchain technology, IPFS (InterPlanetary File System), and vector databases to provide secure, verifiable storage and retrieval of documents.
 
+**🌐 Live Demo: [https://healthyprototype.vercel.app/](https://healthyprototype.vercel.app/)**
+
+**🔗 Backend Services:**
+- **Python Backend**: [https://bioblock-python-backend.onrender.com](https://bioblock-python-backend.onrender.com)
+- **JavaScript Backend**: [https://bioblock-js-backend.onrender.com](https://bioblock-js-backend.onrender.com)
+
 ## Features
 
 - **Document Upload**: Upload documents to IPFS with secure, decentralized storage
@@ -29,7 +35,14 @@ healthy/
 │   │   └── DocumentStorage.sol # Smart contract source
 │   └── package.json
 ├── javascript_backend/        # Express.js API server
-│   ├── index.js              # Main server file
+│   ├── controllers/          # Business logic controllers
+│   │   ├── anonymizeController.js # File anonymization logic
+│   │   └── healthController.js    # Health check logic
+│   ├── routes/              # API route definitions
+│   │   ├── anonymize.js     # Anonymization routes
+│   │   └── health.js        # Health check routes
+│   ├── server.js            # Main server file
+│   ├── vercel.json          # Vercel deployment config
 │   └── package.json
 ├── python_backend/           # FastAPI service
 │   ├── main.py               # ChromaDB and search endpoints
@@ -50,10 +63,11 @@ The project consists of multiple components:
 - Document upload and search interfaces
 
 ### JavaScript Backend (Express)
-- API endpoints for document storage and retrieval
-- Integration with IPFS via Pinata for decentralized file storage
-- Connection to Qdrant vector database for semantic search
-- File upload handling with multer
+- RESTful API with organized MVC structure
+- Controllers for business logic separation
+- Route handlers for API endpoints
+- File upload handling with multer for Excel anonymization
+- CORS enabled for cross-origin requests
 
 ### Python Backend (FastAPI)
 - Text embedding service using ChromaDB
@@ -126,7 +140,7 @@ The project consists of multiple components:
 1. **Start the JavaScript backend (port 3001)**
    ```bash
    cd javascript_backend
-   node index.js
+   node server.js
    ```
 
 2. **Start the React frontend**
@@ -134,7 +148,7 @@ The project consists of multiple components:
    cd prototype
    npm start
    ```
-   *The frontend will automatically use the deployed Python backend on Render*
+   *The frontend will automatically use the deployed Python backend*
 
 **Option 2: Full Local Development**
 
@@ -147,7 +161,7 @@ The project consists of multiple components:
 2. **Start the JavaScript backend (port 3001)**
    ```bash
    cd javascript_backend
-   node index.js
+   node server.js
    ```
 
 3. **Start the React frontend**
@@ -163,19 +177,39 @@ The project consists of multiple components:
 
 ## API Endpoints
 
-### JavaScript Backend (Port 3001)
-- `POST /anonymize` - Anonymize PHI (Personal Health Information) in Excel files
+### JavaScript Backend (Express.js)
+**🌐 Live URL**: `https://bioblock-js-backend.onrender.com`
+**🔧 Local URL**: `http://localhost:3001`
+
+- `GET /` - Root endpoint with API information
+- `GET /api/health` - Health check endpoint to verify server status
+- `POST /api/anonymize` - Anonymize PHI (Personal Health Information) in Excel files
   - Input: Excel file (.xlsx or .xls) via multipart form data
   - Output: Anonymized Excel file with wallet-based IDs
-- `GET /health` - Health check endpoint to verify server status
-  - Output: JSON with server status and timestamp
+- Organized with MVC architecture (controllers and routes)
 
-*Note: Document upload and Qdrant integration APIs are currently commented out*
+### Python Backend (FastAPI)
+**🌐 Live URL**: `https://bioblock-python-backend.onrender.com`
+**🔧 Local URL**: `http://localhost:3002`
 
-### Python Backend (Port 3002)
+- `GET /` - Health check and API information
 - `POST /store` - Store document summaries and metadata in ChromaDB
 - `POST /search` - Search documents using natural language queries
 - Returns similarity scores, document metadata, and summaries
+
+### Example API Usage
+```bash
+# Health check - JavaScript backend
+curl https://bioblock-js-backend.onrender.com/api/health
+
+# Health check - Python backend
+curl https://bioblock-python-backend.onrender.com/
+
+# Search documents (POST request)
+curl -X POST https://bioblock-python-backend.onrender.com/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "patient information", "k": 5}'
+```
 
 ## Environment Configuration
 
@@ -214,23 +248,42 @@ The project uses a smart contract (`DocumentStorage.sol`) deployed on the Ethere
 
 ## Deployment
 
+### Live Application
+**🌐 Frontend**: [https://healthyprototype.vercel.app/](https://healthyprototype.vercel.app/)
+**🔗 Python Backend**: [https://bioblock-python-backend.onrender.com](https://bioblock-python-backend.onrender.com)
+**🔗 JavaScript Backend**: [https://bioblock-js-backend.onrender.com](https://bioblock-js-backend.onrender.com)
+
 ### Current Deployment Status
-- **Python Backend**: 🔄 Can be deployed to Render, Vercel, or similar platforms
-- **JavaScript Backend**: 🔄 Can be deployed to Heroku, Render, or similar services  
-- **Frontend**: 🔄 Can be deployed to Vercel, Netlify, or similar platforms
+- **Frontend**: ✅ Deployed on Vercel
+- **Python Backend**: ✅ Deployed on Render
+- **JavaScript Backend**: ✅ Deployed on Render
+- **Smart Contract**: 🔄 Ready for Ethereum mainnet deployment
 
 ### Deployment Options
-- **Frontend**: Can be deployed to Vercel or Netlify
-- **Python Backend**: Already deployed to Render with `vercel.json` configuration
-- **JavaScript Backend**: Can be deployed to Heroku, Render, or similar services
+- **Frontend**: Deployed to Vercel with environment variables configured
+- **Python Backend**: Can be deployed to Render or Vercel with included configuration
+- **JavaScript Backend**: Can be deployed to Render, Vercel, or Heroku
+  - **Render**: Use build command `npm install` and start command `node server.js`
+  - **Vercel**: Uses included `vercel.json` configuration
 - **Smart Contract**: Should be deployed to Ethereum mainnet for production use
 
 ### Environment Variables for Production
-Update the `.env` file with production URLs when deploying:
+The application uses the following production URLs:
 ```env
-REACT_APP_PYTHON_BACKEND_URL=https://your-python-backend.onrender.com
-REACT_APP_JS_BACKEND_URL=https://your-js-backend.herokuapp.com
+REACT_APP_PYTHON_BACKEND_URL=https://bioblock-python-backend.onrender.com
+REACT_APP_JS_BACKEND_URL=https://bioblock-js-backend.onrender.com
+REACT_APP_PINATA_JWT=your_pinata_jwt_key_here
+REACT_APP_ENCRYPTION_KEY=your_32_byte_encryption_key_here
 ```
+
+### Deployment Commands for Render
+For JavaScript backend deployment on Render:
+- **Build Command**: `npm install`
+- **Start Command**: `node server.js`
+
+For Python backend deployment on Render:
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 
 ## License
 
