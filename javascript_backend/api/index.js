@@ -9,7 +9,6 @@ const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-const port = 3001;
 
 app.use(cors());
 app.use(express.json());
@@ -330,11 +329,5 @@ app.use((error, req, res, next) => {
     });
 });
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-    console.log(`Health check: http://localhost:${port}/health`);
-    console.log(`Available endpoints:`);
-    console.log(`  POST /store - Store data with embedding`);
-    console.log(`  POST /search - Search stored data`);
-    console.log(`  POST /anonymize - Anonymize Excel files`);
-});
+// Export the Express API for Vercel
+module.exports = app;
