@@ -27,7 +27,7 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
     const formData = new FormData();
     formData.append('file', file);
 
-    const jsBackendUrl = process.env.REACT_APP_JS_BACKEND_URL || 'http://localhost:3001';
+    const jsBackendUrl = 'http://localhost:3001/api';
     const response = await fetch(`${jsBackendUrl}/anonymize`, {
       method: 'POST',
       body: formData
