@@ -180,6 +180,15 @@ export const getDocumentPrice = async (ipfsHash) => {
   return ethers.formatEther(priceInWei);
 };
 
+export const getMyDocuments = async () => {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+  
+  const documents = await contract.getMyDocuments();
+  return documents;
+};
+
 export const getEarnings = async (address) => {
   const provider = new ethers.BrowserProvider(window.ethereum);
   const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
