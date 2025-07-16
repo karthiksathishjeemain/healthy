@@ -14,8 +14,11 @@ Bio-Block is a decentralized document management system that leverages blockchai
 - **Document Anonymization**: Automatic PHI anonymization for Excel files in healthcare
 - **Blockchain Verification**: Store document hashes on the Ethereum blockchain for tamper-proof verification
 - **Semantic Search**: Find documents using natural language queries with AI-powered vector search
-- **User Dashboard**: View all your documents in one place with detailed metadata
+- **User Dashboard**: Complete dashboard to view earnings, withdraw funds, and manage documents
+- **Document Management**: View all uploaded documents with pricing and download capabilities
+- **Document Downloads**: Direct download of owned documents with original encryption/decryption
 - **Document Marketplace**: Set prices for documents and earn from document purchases
+- **Earnings Tracking**: Real-time earnings display and withdrawal functionality
 - **Wallet Integration**: Seamless connection with Ethereum wallets (like MetaMask)
 - **Environment Flexibility**: Easy switching between local and production environments
 
@@ -31,6 +34,7 @@ healthy/
 │   │   ├── upload_data.js    # Document upload interface
 │   │   ├── search_data.js    # Document search interface
 │   │   ├── search.js         # Enhanced search component
+│   │   ├── Dashboard.js      # User dashboard with earnings and document management
 │   │   ├── encryptionUtils.js # Document encryption utilities
 │   │   └── DocumentStorage.sol # Smart contract source
 │   └── package.json
@@ -61,6 +65,9 @@ The project consists of multiple components:
 - Modern UI built with React.js and Tailwind CSS
 - Wallet integration using Ethereum provider
 - Document upload and search interfaces
+- Complete user dashboard with earnings tracking
+- Document management with download functionality
+- Real-time earnings display and withdrawal capabilities
 
 ### JavaScript Backend (Express)
 - RESTful API with organized MVC structure
@@ -77,6 +84,8 @@ The project consists of multiple components:
 ### Smart Contracts (Solidity)
 - Document verification on Ethereum blockchain
 - Document marketplace functionality
+- Earnings tracking and withdrawal system
+- User document ownership management
 
 ## Getting Started
 
@@ -225,10 +234,14 @@ This allows seamless switching between local development and production environm
 ## How It Works
 
 1. **Document Upload**: Users upload files through the React interface
-2. **IPFS Storage**: Files are stored on IPFS using Pinata service
+2. **IPFS Storage**: Files are encrypted and stored on IPFS using Pinata service
 3. **Blockchain Recording**: Document hashes are stored on Ethereum for verification
 4. **Vector Embedding**: Document summaries are converted to vectors and stored in ChromaDB
 5. **Semantic Search**: Users can search using natural language, powered by vector similarity
+6. **Document Management**: Users can view all their uploaded documents in the dashboard
+7. **Earnings Tracking**: Real-time tracking of earnings from document purchases
+8. **Secure Downloads**: Direct download of owned documents with automatic decryption
+9. **Marketplace**: Users can purchase documents from others and earn from their own uploads
 
 ## Smart Contract
 
@@ -238,13 +251,17 @@ The project uses a smart contract (`DocumentStorage.sol`) deployed on the Ethere
 - Set prices for documents
 - Purchase documents from other users
 - Withdraw earnings from document sales
+- Track user document ownership
+- Manage document marketplace transactions
 
 ## Security Features
 
 - Document hashes stored on blockchain for verification
 - Decentralized storage via IPFS
+- File encryption/decryption for secure document handling
 - Secure wallet integration
 - Optional document anonymization for sensitive data
+- Hash-based file naming for download security
 
 ## Deployment
 
