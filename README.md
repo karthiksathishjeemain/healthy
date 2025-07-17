@@ -11,7 +11,8 @@ Bio-Block is a decentralized document management system that leverages blockchai
 ## Features
 
 - **Document Upload**: Upload documents to IPFS with secure, decentralized storage
-- **Document Anonymization**: Automatic PHI anonymization for Excel files in healthcare
+- **Enhanced Data Collection**: Comprehensive metadata collection including dataset title, disease tags, data type (Personal/Institution), demographics, and data source
+- **Document Anonymization**: Automatic PHI anonymization for Excel files with wallet-based hashing for personal data
 - **Blockchain Verification**: Store document hashes on the Ethereum blockchain for tamper-proof verification
 - **Semantic Search**: Find documents using natural language queries with AI-powered vector search
 - **User Dashboard**: Complete dashboard to view earnings, withdraw funds, and manage documents
@@ -74,6 +75,7 @@ The project consists of multiple components:
 - Controllers for business logic separation
 - Route handlers for API endpoints
 - File upload handling with multer for Excel anonymization
+- Wallet-based anonymization for personal data types
 - CORS enabled for cross-origin requests
 
 ### Python Backend (FastAPI)
@@ -194,7 +196,8 @@ The project consists of multiple components:
 - `GET /api/health` - Health check endpoint to verify server status
 - `POST /api/anonymize` - Anonymize PHI (Personal Health Information) in Excel files
   - Input: Excel file (.xlsx or .xls) via multipart form data
-  - Output: Anonymized Excel file with wallet-based IDs
+  - Optional: Wallet address for personal data anonymization
+  - Output: Anonymized Excel file with appropriate ID generation
 - Organized with MVC architecture (controllers and routes)
 
 ### Python Backend (FastAPI)
@@ -231,17 +234,53 @@ The application uses environment variables to configure backend URLs:
 
 This allows seamless switching between local development and production environments.
 
+## Enhanced Upload System
+
+The document upload system has been significantly enhanced to collect comprehensive metadata:
+
+### Required Fields
+- **Dataset Title**: Unique identifier for the document
+- **Description**: Detailed content description
+- **Disease Tags**: Medical condition tags (e.g., cancer, diabetes, heart disease)
+- **Data Type**: Personal or Institution
+- **Gender**: 
+  - Personal: Male, Female, Prefer not to say
+  - Institution: Male, Female, Mixed
+- **Age Information**:
+  - Personal: Specific age
+  - Institution: Age range (0-18, 19-30, 31-45, 46-60, 61-75, 76+, Mixed)
+- **Data Source**: Hospital, Clinic, Laboratory, Research Institution, Medical Device, Electronic Health Record, Patient Self-Reported, Insurance Claims, Other
+- **Price**: ETH price for document access
+
+### Data Processing
+All collected metadata is formatted and sent to the Python backend as:
+```
+Dataset Title: {user input}
+Description: {user input}
+Disease Tags: {user input}
+Data Type: Personal/Institution
+Gender: {user selection}
+Age: {user input} or Age Range: {user selection}
+Data Source: {user selection}
+```
+
+### Anonymization Logic
+- **Personal Data**: Uses wallet address for consistent anonymization across all patient data
+- **Institution Data**: Uses standard anonymization methods without wallet dependency
+
 ## How It Works
 
-1. **Document Upload**: Users upload files through the React interface
-2. **IPFS Storage**: Files are encrypted and stored on IPFS using Pinata service
-3. **Blockchain Recording**: Document hashes are stored on Ethereum for verification
-4. **Vector Embedding**: Document summaries are converted to vectors and stored in ChromaDB
-5. **Semantic Search**: Users can search using natural language, powered by vector similarity
-6. **Document Management**: Users can view all their uploaded documents in the dashboard
-7. **Earnings Tracking**: Real-time tracking of earnings from document purchases
-8. **Secure Downloads**: Direct download of owned documents with automatic decryption
-9. **Marketplace**: Users can purchase documents from others and earn from their own uploads
+1. **Document Upload**: Users upload files through the React interface with comprehensive metadata
+2. **Data Collection**: Enhanced form collects dataset title, description, disease tags, data type, demographics, and data source
+3. **File Anonymization**: For personal data types, wallet address is used for anonymization; institutions use standard methods
+4. **IPFS Storage**: Files are encrypted and stored on IPFS using Pinata service
+5. **Blockchain Recording**: Document hashes are stored on Ethereum for verification
+6. **Vector Embedding**: Document summaries with metadata are converted to vectors and stored in ChromaDB
+7. **Semantic Search**: Users can search using natural language, powered by vector similarity
+8. **Document Management**: Users can view all their uploaded documents in the dashboard
+9. **Earnings Tracking**: Real-time tracking of earnings from document purchases
+10. **Secure Downloads**: Direct download of owned documents with automatic decryption
+11. **Marketplace**: Users can purchase documents from others and earn from their own uploads
 
 ## Smart Contract
 
@@ -260,7 +299,8 @@ The project uses a smart contract (`DocumentStorage.sol`) deployed on the Ethere
 - Decentralized storage via IPFS
 - File encryption/decryption for secure document handling
 - Secure wallet integration
-- Optional document anonymization for sensitive data
+- Advanced document anonymization with data type-specific handling
+- Personal data anonymization using wallet-based hashing
 - Hash-based file naming for download security
 
 ## Deployment
