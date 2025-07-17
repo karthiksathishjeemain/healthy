@@ -6,7 +6,14 @@ import { encryptFile } from './encryptionUtils.js';
 
 export default function UploadData({ onBack, isWalletConnected, walletAddress, onWalletConnect }) {
   const [selectedFile, setSelectedFile] = useState(null);
+  const [datasetTitle, setDatasetTitle] = useState('');
   const [summary, setSummary] = useState('');
+  const [diseaseTags, setDiseaseTags] = useState('');
+  const [dataType, setDataType] = useState('');
+  const [gender, setGender] = useState('');
+  const [age, setAge] = useState('');
+  const [ageRange, setAgeRange] = useState('');
+  const [dataSource, setDataSource] = useState('');
   const [price, setPrice] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
@@ -26,6 +33,11 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
   const anonymizeFile = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
+    
+    // For personal data, use wallet address for hashing
+    if (dataType === 'Personal') {
+      formData.append('walletAddress', walletAddress);
+    }
 
     const jsBackendUrl = process.env.REACT_APP_JS_BACKEND_URL||'http://localhost:3001/api';
     const response = await fetch(`${jsBackendUrl}/anonymize`, {
@@ -52,8 +64,43 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
       return;
     }
 
+    if (!datasetTitle.trim()) {
+      alert('Please provide a dataset title');
+      return;
+    }
+
     if (!summary.trim()) {
-      alert('Please provide a summary of your document');
+      alert('Please provide a description of your document');
+      return;
+    }
+
+    if (!diseaseTags.trim()) {
+      alert('Please provide disease tags');
+      return;
+    }
+
+    if (!dataType) {
+      alert('Please select data type');
+      return;
+    }
+
+    if (!gender) {
+      alert('Please select gender');
+      return;
+    }
+
+    if (dataType === 'Personal' && !age) {
+      alert('Please provide age');
+      return;
+    }
+
+    if (dataType === 'Institution' && !ageRange) {
+      alert('Please select age range');
+      return;
+    }
+
+    if (!dataSource) {
+      alert('Please select data source');
       return;
     }
 
@@ -94,6 +141,15 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
         price: price
       };
 
+      // Create detailed summary with all fields
+      const detailedSummary = `Dataset Title: ${datasetTitle.trim()}
+Description: ${summary.trim()}
+Disease Tags: ${diseaseTags.trim()}
+Data Type: ${dataType}
+Gender: ${gender}
+${dataType === 'Personal' ? `Age: ${age}` : `Age Range: ${ageRange}`}
+Data Source: ${dataSource}`;
+
       const pythonBackendUrl = process.env.REACT_APP_PYTHON_BACKEND_URL || 'http://localhost:3002';
       const storeResponse = await fetch(`${pythonBackendUrl}/store`, {
         method: 'POST',
@@ -101,7 +157,7 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          summary: summary.trim(),
+          summary: detailedSummary,
           cid: result.hash,
           metadata: metadata
         }),
@@ -115,8 +171,16 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
       
       alert(`Success!\nIPFS Hash: ${result.hash}\nTransaction: ${txHash}\nPrice: ${price} ETH\nStored in database: ${storeResult.message}`);
       
+      // Reset all fields
       setSelectedFile(null);
+      setDatasetTitle('');
       setSummary('');
+      setDiseaseTags('');
+      setDataType('');
+      setGender('');
+      setAge('');
+      setAgeRange('');
+      setDataSource('');
       setPrice('');
       
     } catch (error) {
@@ -199,9 +263,25 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
           )}
 
           <div className="mb-4">
+            <label htmlFor="datasetTitle" className="block text-sm font-medium text-gray-700 mb-2">
+              <FileText size={16} className="inline mr-1" />
+              Dataset Title *
+            </label>
+            <input
+              id="datasetTitle"
+              type="text"
+              value={datasetTitle}
+              onChange={(e) => setDatasetTitle(e.target.value)}
+              placeholder="Enter dataset title..."
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!isWalletConnected ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              disabled={!isWalletConnected}
+            />
+          </div>
+
+          <div className="mb-4">
             <label htmlFor="summary" className="block text-sm font-medium text-gray-700 mb-2">
               <FileText size={16} className="inline mr-1" />
-              Document Summary
+              Description *
             </label>
             <textarea
               id="summary"
@@ -212,9 +292,137 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
               rows={4}
               disabled={!isWalletConnected}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              This summary will help you find your document later
-            </p>
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="diseaseTags" className="block text-sm font-medium text-gray-700 mb-2">
+              <FileText size={16} className="inline mr-1" />
+              Disease Tags *
+            </label>
+            <input
+              id="diseaseTags"
+              type="text"
+              value={diseaseTags}
+              onChange={(e) => setDiseaseTags(e.target.value)}
+              placeholder="e.g., cancer, diabetes, heart disease"
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!isWalletConnected ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              disabled={!isWalletConnected}
+            />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="dataType" className="block text-sm font-medium text-gray-700 mb-2">
+              <FileText size={16} className="inline mr-1" />
+              Data Type *
+            </label>
+            <select
+              id="dataType"
+              value={dataType}
+              onChange={(e) => setDataType(e.target.value)}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!isWalletConnected ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              disabled={!isWalletConnected}
+            >
+              <option value="">Select data type</option>
+              <option value="Personal">Personal</option>
+              <option value="Institution">Institution</option>
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
+              <FileText size={16} className="inline mr-1" />
+              Gender *
+            </label>
+            <select
+              id="gender"
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!isWalletConnected ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              disabled={!isWalletConnected}
+            >
+              <option value="">Select gender</option>
+              {dataType === 'Personal' ? (
+                <>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </>
+              ) : (
+                <>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Mixed">Mixed</option>
+                </>
+              )}
+            </select>
+          </div>
+
+          {dataType === 'Personal' && (
+            <div className="mb-4">
+              <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
+                <FileText size={16} className="inline mr-1" />
+                Age *
+              </label>
+              <input
+                id="age"
+                type="number"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="Enter age"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!isWalletConnected ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                disabled={!isWalletConnected}
+              />
+            </div>
+          )}
+
+          {dataType === 'Institution' && (
+            <div className="mb-4">
+              <label htmlFor="ageRange" className="block text-sm font-medium text-gray-700 mb-2">
+                <FileText size={16} className="inline mr-1" />
+                Age Range *
+              </label>
+              <select
+                id="ageRange"
+                value={ageRange}
+                onChange={(e) => setAgeRange(e.target.value)}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!isWalletConnected ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                disabled={!isWalletConnected}
+              >
+                <option value="">Select age range</option>
+                <option value="0-18">0-18</option>
+                <option value="19-30">19-30</option>
+                <option value="31-45">31-45</option>
+                <option value="46-60">46-60</option>
+                <option value="61-75">61-75</option>
+                <option value="76+">76+</option>
+                <option value="Mixed">Mixed</option>
+              </select>
+            </div>
+          )}
+
+          <div className="mb-4">
+            <label htmlFor="dataSource" className="block text-sm font-medium text-gray-700 mb-2">
+              <FileText size={16} className="inline mr-1" />
+              Data Source *
+            </label>
+            <select
+              id="dataSource"
+              value={dataSource}
+              onChange={(e) => setDataSource(e.target.value)}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!isWalletConnected ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              disabled={!isWalletConnected}
+            >
+              <option value="">Select data source</option>
+              <option value="Hospital">Hospital</option>
+              <option value="Clinic">Clinic</option>
+              <option value="Laboratory">Laboratory</option>
+              <option value="Research Institution">Research Institution</option>
+              <option value="Medical Device">Medical Device</option>
+              <option value="Electronic Health Record">Electronic Health Record</option>
+              <option value="Patient Self-Reported">Patient Self-Reported</option>
+              <option value="Insurance Claims">Insurance Claims</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
 
           <div className="mb-4">
@@ -240,7 +448,7 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
 
           <button
             onClick={handleUpload}
-            disabled={!selectedFile || !isWalletConnected || !summary.trim() || !price || parseFloat(price) <= 0 || isUploading}
+            disabled={!selectedFile || !isWalletConnected || !datasetTitle.trim() || !summary.trim() || !diseaseTags.trim() || !dataType || !gender || (dataType === 'Personal' && !age) || (dataType === 'Institution' && !ageRange) || !dataSource || !price || parseFloat(price) <= 0 || isUploading}
             className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isUploading ? 'Uploading...' : 'Upload to IPFS & Store'}
