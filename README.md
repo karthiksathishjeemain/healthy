@@ -1,6 +1,6 @@
 # Bio-Block: Secure Document Management System
 
-Bio-Block is a decentralized document management system that leverages blockchain technology, IPFS (InterPlanetary File System), and vector databases to provide secure, verifiable storage and retrieval of documents.
+Bio-Block is a decentralized document management system that leverages blockchain technology, IPFS (InterPlanetary File System), and vector databases to provide secure, verifiable storage and retrieval of documents with advanced search and filtering capabilities.
 
 **🌐 Live Demo: [https://healthyprototype.vercel.app/](https://healthyprototype.vercel.app/)**
 
@@ -8,13 +8,20 @@ Bio-Block is a decentralized document management system that leverages blockchai
 - **Python Backend**: [https://bioblock-python-backend.onrender.com](https://bioblock-python-backend.onrender.com)
 - **JavaScript Backend**: [https://bioblock-js-backend.onrender.com](https://bioblock-js-backend.onrender.com)
 
+## Recent Updates (MetaDataImprovement Branch)
+
+- **Enhanced Search Capabilities**: Added comprehensive filtering system with metadata-based search options
+- **Advanced Filter Integration**: Users can now filter by data type, gender, data source, price range, and file type
+- **Combined Search & Filter**: New endpoint that combines semantic search with metadata filtering for precise document discovery
+- **Improved User Experience**: Enhanced search interface with toggle-able filter options and better result display
+
 ## Features
 
 - **Document Upload**: Upload documents to IPFS with secure, decentralized storage
 - **Enhanced Data Collection**: Comprehensive metadata collection including dataset title, disease tags, data type (Personal/Institution), demographics, and data source
 - **Document Anonymization**: Automatic PHI anonymization for Excel files with wallet-based hashing for personal data
 - **Blockchain Verification**: Store document hashes on the Ethereum blockchain for tamper-proof verification
-- **Semantic Search**: Find documents using natural language queries with AI-powered vector search
+- **Advanced Search & Filtering**: Find documents using natural language queries with vector search and comprehensive metadata filtering
 - **User Dashboard**: Complete dashboard to view earnings, withdraw funds, and manage documents
 - **Document Management**: View all uploaded documents with pricing and download capabilities
 - **Document Downloads**: Direct download of owned documents with original encryption/decryption
@@ -207,6 +214,8 @@ The project consists of multiple components:
 - `GET /` - Health check and API information
 - `POST /store` - Store document summaries and metadata in ChromaDB
 - `POST /search` - Search documents using natural language queries
+- `POST /filter` - Filter documents by metadata criteria (data type, gender, data source, price range, file type)
+- `POST /search_with_filter` - Combined semantic search with metadata filtering
 - Returns similarity scores, document metadata, and summaries
 
 ### Example API Usage
@@ -221,6 +230,16 @@ curl https://bioblock-python-backend.onrender.com/
 curl -X POST https://bioblock-python-backend.onrender.com/search \
   -H "Content-Type: application/json" \
   -d '{"query": "patient information", "k": 5}'
+
+# Filter documents by metadata
+curl -X POST https://bioblock-python-backend.onrender.com/filter \
+  -H "Content-Type: application/json" \
+  -d '{"filters": {"dataType": "Personal", "gender": "Male"}, "n_results": 10}'
+
+# Combined search with filters
+curl -X POST https://bioblock-python-backend.onrender.com/search_with_filter \
+  -H "Content-Type: application/json" \
+  -d '{"query": "diabetes research", "filters": {"dataType": "Institution", "dataSource": "Hospital"}, "n_results": 5}'
 ```
 
 ## Environment Configuration
@@ -268,6 +287,27 @@ Data Source: {user selection}
 - **Personal Data**: Uses wallet address for consistent anonymization across all patient data
 - **Institution Data**: Uses standard anonymization methods without wallet dependency
 
+## Advanced Search & Filtering System
+
+The platform features a sophisticated search system that combines semantic search with comprehensive filtering capabilities:
+
+### Search Options
+1. **Semantic Search**: Natural language queries using vector similarity
+2. **Metadata Filtering**: Filter documents by specific criteria without search queries
+3. **Combined Search**: Semantic search enhanced with metadata filters for precise results
+
+### Available Filters
+- **Data Type**: Personal or Institution
+- **Gender**: Male, Female, Mixed, Prefer not to say
+- **Data Source**: Hospital, Clinic, Laboratory, Research Institution, Medical Device, Electronic Health Record, Patient Self-Reported, Insurance Claims, Other
+- **Price Range**: Custom ETH price ranges
+- **File Type**: Various document formats
+
+### Search Endpoints
+- `/search` - Semantic search with natural language queries
+- `/filter` - Pure metadata filtering without text search
+- `/search_with_filter` - Combined semantic and metadata filtering
+
 ## How It Works
 
 1. **Document Upload**: Users upload files through the React interface with comprehensive metadata
@@ -276,7 +316,7 @@ Data Source: {user selection}
 4. **IPFS Storage**: Files are encrypted and stored on IPFS using Pinata service
 5. **Blockchain Recording**: Document hashes are stored on Ethereum for verification
 6. **Vector Embedding**: Document summaries with metadata are converted to vectors and stored in ChromaDB
-7. **Semantic Search**: Users can search using natural language, powered by vector similarity
+7. **Advanced Search**: Users can search using natural language queries, apply metadata filters, or combine both for precise document discovery
 8. **Document Management**: Users can view all their uploaded documents in the dashboard
 9. **Earnings Tracking**: Real-time tracking of earnings from document purchases
 10. **Secure Downloads**: Direct download of owned documents with automatic decryption
@@ -301,6 +341,7 @@ The project uses a smart contract (`DocumentStorage.sol`) deployed on the Ethere
 - Secure wallet integration
 - Advanced document anonymization with data type-specific handling
 - Personal data anonymization using wallet-based hashing
+- Advanced document search with multiple filter options (data type, gender, data source, price range, file type)
 - Hash-based file naming for download security
 
 ## Deployment
