@@ -11,8 +11,6 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
   const [diseaseTags, setDiseaseTags] = useState('');
   const [dataType, setDataType] = useState('');
   const [gender, setGender] = useState('');
-  const [age, setAge] = useState('');
-  const [ageRange, setAgeRange] = useState('');
   const [dataSource, setDataSource] = useState('');
   const [price, setPrice] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -39,7 +37,7 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
       formData.append('walletAddress', walletAddress);
     }
 
-    const jsBackendUrl = process.env.REACT_APP_JS_BACKEND_URL||'http://localhost:3001/api';
+    const jsBackendUrl =process.env.REACT_APP_JS_BACKEND_URL || 'http://localhost:3001/api';
     const response = await fetch(`${jsBackendUrl}/anonymize`, {
       method: 'POST',
       body: formData
@@ -89,16 +87,6 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
       return;
     }
 
-    if (dataType === 'Personal' && !age) {
-      alert('Please provide age');
-      return;
-    }
-
-    if (dataType === 'Institution' && !ageRange) {
-      alert('Please select age range');
-      return;
-    }
-
     if (!dataSource) {
       alert('Please select data source');
       return;
@@ -138,17 +126,12 @@ export default function UploadData({ onBack, isWalletConnected, walletAddress, o
         walletAddress: walletAddress,
         transactionHash: txHash,
         encrypted: true,
-        price: price
+        price: price,
+        dataType: dataType,
+        gender: gender,
+        dataSource: dataSource,
+        ...(diseaseTags.trim() && { disease_tags: diseaseTags.trim() })
       };
-
-      // Create detailed summary with all fields
-      const detailedSummary = `Dataset Title: ${datasetTitle.trim()}
-Description: ${summary.trim()}
-Disease Tags: ${diseaseTags.trim()}
-Data Type: ${dataType}
-Gender: ${gender}
-${dataType === 'Personal' ? `Age: ${age}` : `Age Range: ${ageRange}`}
-Data Source: ${dataSource}`;
 
       const pythonBackendUrl = process.env.REACT_APP_PYTHON_BACKEND_URL || 'http://localhost:3002';
       const storeResponse = await fetch(`${pythonBackendUrl}/store`, {
@@ -157,7 +140,8 @@ Data Source: ${dataSource}`;
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          summary: detailedSummary,
+          summary: summary.trim(),
+          dataset_title: datasetTitle.trim(),
           cid: result.hash,
           metadata: metadata
         }),
@@ -178,8 +162,6 @@ Data Source: ${dataSource}`;
       setDiseaseTags('');
       setDataType('');
       setGender('');
-      setAge('');
-      setAgeRange('');
       setDataSource('');
       setPrice('');
       
@@ -357,49 +339,6 @@ Data Source: ${dataSource}`;
             </select>
           </div>
 
-          {dataType === 'Personal' && (
-            <div className="mb-4">
-              <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
-                <FileText size={16} className="inline mr-1" />
-                Age *
-              </label>
-              <input
-                id="age"
-                type="number"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                placeholder="Enter age"
-                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!isWalletConnected ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                disabled={!isWalletConnected}
-              />
-            </div>
-          )}
-
-          {dataType === 'Institution' && (
-            <div className="mb-4">
-              <label htmlFor="ageRange" className="block text-sm font-medium text-gray-700 mb-2">
-                <FileText size={16} className="inline mr-1" />
-                Age Range *
-              </label>
-              <select
-                id="ageRange"
-                value={ageRange}
-                onChange={(e) => setAgeRange(e.target.value)}
-                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!isWalletConnected ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                disabled={!isWalletConnected}
-              >
-                <option value="">Select age range</option>
-                <option value="0-18">0-18</option>
-                <option value="19-30">19-30</option>
-                <option value="31-45">31-45</option>
-                <option value="46-60">46-60</option>
-                <option value="61-75">61-75</option>
-                <option value="76+">76+</option>
-                <option value="Mixed">Mixed</option>
-              </select>
-            </div>
-          )}
-
           <div className="mb-4">
             <label htmlFor="dataSource" className="block text-sm font-medium text-gray-700 mb-2">
               <FileText size={16} className="inline mr-1" />
@@ -448,7 +387,7 @@ Data Source: ${dataSource}`;
 
           <button
             onClick={handleUpload}
-            disabled={!selectedFile || !isWalletConnected || !datasetTitle.trim() || !summary.trim() || !diseaseTags.trim() || !dataType || !gender || (dataType === 'Personal' && !age) || (dataType === 'Institution' && !ageRange) || !dataSource || !price || parseFloat(price) <= 0 || isUploading}
+            disabled={!selectedFile || !isWalletConnected || !datasetTitle.trim() || !summary.trim() || !diseaseTags.trim() || !dataType || !gender || !dataSource || !price || parseFloat(price) <= 0 || isUploading}
             className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isUploading ? 'Uploading...' : 'Upload to IPFS & Store'}

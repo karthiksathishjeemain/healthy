@@ -3,7 +3,6 @@ const XLSX = require('xlsx');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 
-// Configure multer for file uploads
 const storage = multer.memoryStorage();
 const upload = multer({
     storage: storage,
@@ -46,11 +45,18 @@ const anonymizeFile = async (req, res) => {
             });
         }
 
+        const walletAddress = req.body.walletAddress;
+        const isPersonalData = !!walletAddress;
+
+        console.log('Processing anonymization:', { 
+            isPersonalData, 
+            walletAddress: walletAddress ? `${walletAddress.substring(0, 6)}...` : 'N/A' 
+        });
+
         const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
         const allIdentifiers = new Set();
         const sheetColumnRefs = {};
 
-        // Process each sheet to identify PHI columns and patient IDs
         workbook.SheetNames.forEach(sheetName => {
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -60,7 +66,6 @@ const anonymizeFile = async (req, res) => {
             const headers = jsonData[0] || [];
             let patientIdCol = null;
 
-            // Find patient ID column
             headers.forEach((header, index) => {
                 if (header && typeof header === 'string') {
                     const headerLower = header.toLowerCase();
@@ -71,7 +76,7 @@ const anonymizeFile = async (req, res) => {
             });
 
             if (patientIdCol !== null) {
-                // Collect patient IDs
+            
                 for (let i = 1; i < jsonData.length; i++) {
                     const row = jsonData[i];
                     if (row && row[patientIdCol]) {
@@ -81,7 +86,7 @@ const anonymizeFile = async (req, res) => {
                 }
                 sheetColumnRefs[sheetName] = { patientIdCol };
             } else {
-                // Generate UUIDs for rows without patient ID column
+             
                 for (let i = 1; i < jsonData.length; i++) {
                     const row = jsonData[i];
                     if (row && row.some(cell => cell !== undefined && cell !== null && cell !== '')) {
@@ -93,14 +98,19 @@ const anonymizeFile = async (req, res) => {
             }
         });
 
-        // Create mapping from identifiers to anonymized IDs
         const sortedIdentifiers = Array.from(allIdentifiers).sort();
         const identifierToId = {};
+        
+        // Handle all 4 cases:
+        // 1. Personal + Patient ID exists: Hash each patient ID individually
+        // 2. Personal + No Patient ID: Use wallet address for all rows
+        // 3. Institution + Patient ID exists: Hash each patient ID individually  
+        // 4. Institution + No Patient ID: Use UUID for each row
+        
         sortedIdentifiers.forEach((identifier, index) => {
             identifierToId[identifier] = generateAnonymizedId(identifier, index + 1);
         });
 
-        // Create new workbook with anonymized data
         const cleanedWorkbook = XLSX.utils.book_new();
 
         workbook.SheetNames.forEach(sheetName => {
@@ -118,7 +128,7 @@ const anonymizeFile = async (req, res) => {
             if (sheetColumnRefs[sheetName]) {
                 const sheetRefs = sheetColumnRefs[sheetName];
 
-                // Identify columns to mask
+               
                 const columnsToMask = [];
                 headers.forEach((header, index) => {
                     if (header && typeof header === 'string') {
@@ -137,11 +147,20 @@ const anonymizeFile = async (req, res) => {
 
                 if (sheetRefs.useUUID) {
                     // Handle sheets without patient ID column
+                    // Case 2: Personal + No Patient ID - Use wallet address
+                    // Case 4: Institution + No Patient ID - Use UUID for each row
                     for (let i = 1; i < cleanedData.length; i++) {
                         const row = cleanedData[i];
                         if (row && row.some(cell => cell !== undefined && cell !== null && cell !== '')) {
-                            const uuid = generateUUID();
-                            const id = generateAnonymizedId(uuid, i);
+                            let id;
+                            if (isPersonalData && walletAddress) {
+                                // Case 2: Personal data without Patient ID - use wallet address
+                                id = generateAnonymizedId(walletAddress, 1);
+                            } else {
+                                // Case 4: Institution data without Patient ID - use UUID
+                                const uuid = generateUUID();
+                                id = generateAnonymizedId(uuid, i);
+                            }
                             
                             columnsToMask.forEach(colIndex => {
                                 if (row[colIndex] !== undefined) {
@@ -152,6 +171,8 @@ const anonymizeFile = async (req, res) => {
                     }
                 } else {
                     // Handle sheets with patient ID column
+                    // Case 1: Personal + Patient ID exists - Hash each patient ID individually
+                    // Case 3: Institution + Patient ID exists - Hash each patient ID individually
                     for (let i = 1; i < cleanedData.length; i++) {
                         const row = cleanedData[i];
                         let id = null;
@@ -176,7 +197,6 @@ const anonymizeFile = async (req, res) => {
             XLSX.utils.book_append_sheet(cleanedWorkbook, newWorksheet, sheetName);
         });
 
-        // Generate output file
         const outputBuffer = XLSX.write(cleanedWorkbook, { 
             bookType: 'xlsx', 
             type: 'buffer' 

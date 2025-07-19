@@ -29,8 +29,8 @@ export default function SearchData({ onBack }) {
 
     setIsSearching(true);
     try {
-      const backendUrl =  'http://localhost:3002';
-      
+      const backendUrl = process.env.REACT_APP_PYTHON_BACKEND_URL || 'http://localhost:3002';
+
       let endpoint = '/search';
       let requestBody = {};
       
@@ -82,31 +82,21 @@ export default function SearchData({ onBack }) {
   const buildFiltersObject = () => {
     const filterObj = {};
     
-    // Collect all summary-based filters
-    const summaryFilters = [];
-    
+    // Map UI filters directly to backend expected format
     if (filters.dataType) {
-      summaryFilters.push(`Data Type: ${filters.dataType}`);
+      filterObj['dataType'] = filters.dataType;
     }
     
     if (filters.gender) {
-      summaryFilters.push(`Gender: ${filters.gender}`);
+      filterObj['gender'] = filters.gender;
     }
     
     if (filters.dataSource) {
-      summaryFilters.push(`Data Source: ${filters.dataSource}`);
+      filterObj['dataSource'] = filters.dataSource;
     }
     
-    // If we have summary filters, combine them with $and
-    if (summaryFilters.length > 0) {
-      if (summaryFilters.length === 1) {
-        filterObj['summary'] = { '$contains': summaryFilters[0] };
-      } else {
-        // For multiple summary filters, use $and to ensure all conditions are met
-        filterObj['$and'] = summaryFilters.map(filter => ({
-          'summary': { '$contains': filter }
-        }));
-      }
+    if (filters.ageRange) {
+      filterObj['ageRange'] = filters.ageRange;
     }
     
     if (filters.fileType) {
@@ -114,10 +104,7 @@ export default function SearchData({ onBack }) {
     }
     
     if (filters.priceRange) {
-      const [min, max] = filters.priceRange.split('-').map(p => parseFloat(p));
-      if (!isNaN(min) && !isNaN(max)) {
-        filterObj['price'] = { '$gte': min, '$lte': max };
-      }
+      filterObj['priceRange'] = filters.priceRange;
     }
     
     return filterObj;
@@ -393,21 +380,28 @@ export default function SearchData({ onBack }) {
                         <div key={index} className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
                           <div className="mb-4">
                             <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                              {result.metadata?.fileName || result.title || result.fileName || `Document ${index + 1}`}
+                              {(() => {
+                      
+                                const fullText = result.summary || result.description || result.content || result.document || '';
+                                const titleMatch = fullText.match(/^Dataset Title:\s*(.+?)$/m);
+                                return titleMatch ? titleMatch[1].trim() : (result.metadata?.fileName || result.title || result.fileName || `Document ${index + 1}`);
+                              })()}
                             </h4>
                             
                             <p className="text-gray-600 mb-3">
-                              {result.summary || 
-                               result.description || 
-                               result.content || 
-                               result.text ||
-                               result.document_summary ||
-                               result.doc_summary ||
-                               result.metadata?.summary ||
-                               result.metadata?.description ||
-                               result.pageContent ||
-                               result.document ||
-                               'No summary available'}
+                              {(() => {
+                              
+                                const fullText = result.summary || result.description || result.content || result.document || '';
+                                
+                          
+                                const summaryMatch = fullText.match(/^Dataset Title:\s*.+?\n(.+?)(?:\nDisease Tags:|$)/s);
+                                if (summaryMatch) {
+                                  return summaryMatch[1].trim();
+                                }
+                                
+                               
+                                return fullText || 'No summary available';
+                              })()}
                             </p>
                             
                             <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 mb-4">
@@ -431,73 +425,25 @@ export default function SearchData({ onBack }) {
                                   <span className="font-medium">Price:</span> {result.metadata.price} ETH
                                 </div>
                               )}
-                              {result.score && (
+                              {result.metadata?.gender && (
                                 <div>
-                                  <span className="font-medium">Relevance:</span> {(result.score * 100).toFixed(1)}%
+                                  <span className="font-medium">Gender:</span> {result.metadata.gender}
                                 </div>
                               )}
-                              
-                              {/* Extract and display enhanced metadata from summary */}
-                              {(() => {
-                                const summary = result.summary || '';
-                                const extractField = (fieldName) => {
-                                  const regex = new RegExp(`${fieldName}:\\s*([^\\n]+)`);
-                                  const match = summary.match(regex);
-                                  return match ? match[1].trim() : null;
-                                };
-                                
-                                const dataType = extractField('Data Type');
-                                const gender = extractField('Gender');
-                                const age = extractField('Age');
-                                const ageRange = extractField('Age Range');
-                                const dataSource = extractField('Data Source');
-                                const diseaseTags = extractField('Disease Tags');
-                                
-                                return (
-                                  <>
-                                    {dataType && (
-                                      <div>
-                                        <span className="font-medium">Data Type:</span> {dataType}
-                                      </div>
-                                    )}
-                                    {gender && (
-                                      <div>
-                                        <span className="font-medium">Gender:</span> {gender}
-                                      </div>
-                                    )}
-                                    {(age || ageRange) && (
-                                      <div>
-                                        <span className="font-medium">{age ? 'Age' : 'Age Range'}:</span> {age || ageRange}
-                                      </div>
-                                    )}
-                                    {dataSource && (
-                                      <div>
-                                        <span className="font-medium">Data Source:</span> {dataSource}
-                                      </div>
-                                    )}
-                                    {diseaseTags && (
-                                      <div className="col-span-2">
-                                        <span className="font-medium">Disease Tags:</span> {diseaseTags}
-                                      </div>
-                                    )}
-                                  </>
-                                );
-                              })()}
-                            </div>
-                            
-                            {(result.cid || result.ipfsHash || result.hash) && (
-                              <div className="text-xs text-gray-400 mb-4 break-all">
-                                <span className="font-medium">IPFS CID:</span> {result.cid || result.ipfsHash || result.hash}
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                            <div className="text-xs text-gray-400">
-                              {result.metadata?.walletAddress && (
-                                <span>Uploaded by: {result.metadata.walletAddress}</span>
+                              {result.metadata?.dataSource && (
+                                <div>
+                                  <span className="font-medium">Data Source:</span> {result.metadata.dataSource}
+                                </div>
+                              )}
+                              {result.metadata?.dataType && (
+                                <div>
+                                  <span className="font-medium">Data Type:</span> {result.metadata.dataType}
+                                </div>
                               )}
                             </div>
+                          </div>
+                          
+                          <div className="flex justify-end items-center pt-4 border-t border-gray-200">
                             
                             {(result.cid || result.ipfsHash || result.hash) && (
                               <button
