@@ -8,24 +8,61 @@ export default function SearchData({ onBack }) {
   const [isSearching, setIsSearching] = useState(false);
   const [downloading, setDownloading] = useState({});
   const [purchasing, setPurchasing] = useState({});
+  
+  // Filter states
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    dataType: '',
+    gender: '',
+    ageRange: '',
+    dataSource: '',
+    priceRange: '',
+    fileType: ''
+  });
+  const [useFilters, setUseFilters] = useState(false);
 
   const handleSearchSubmit = async () => {
-    if (!searchQuery.trim()) {
-      alert('Please enter a search query');
+    if (!searchQuery.trim() && !useFilters) {
+      alert('Please enter a search query or use filters');
       return;
     }
 
     setIsSearching(true);
     try {
-      const backendUrl = process.env.REACT_APP_PYTHON_BACKEND_URL || 'http://localhost:3002';
-      const response = await fetch(`${backendUrl}/search`, {
+      const backendUrl =  'http://localhost:3002';
+      
+      let endpoint = '/search';
+      let requestBody = {};
+      
+      if (useFilters && Object.values(filters).some(value => value !== '')) {
+        // Use search_with_filter or filter endpoint based on whether there's a query
+        if (searchQuery.trim()) {
+          endpoint = '/search_with_filter';
+          requestBody = {
+            query: searchQuery.trim(),
+            filters: buildFiltersObject(),
+            n_results: 10
+          };
+        } else {
+          endpoint = '/filter';
+          requestBody = {
+            filters: buildFiltersObject(),
+            n_results: 10
+          };
+        }
+      } else {
+        // Regular search
+        requestBody = {
+          query: searchQuery.trim()
+        };
+      }
+
+      const response = await fetch(`${backendUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          query: searchQuery.trim()
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -40,6 +77,62 @@ export default function SearchData({ onBack }) {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const buildFiltersObject = () => {
+    const filterObj = {};
+    
+    // Collect all summary-based filters
+    const summaryFilters = [];
+    
+    if (filters.dataType) {
+      summaryFilters.push(`Data Type: ${filters.dataType}`);
+    }
+    
+    if (filters.gender) {
+      summaryFilters.push(`Gender: ${filters.gender}`);
+    }
+    
+    if (filters.dataSource) {
+      summaryFilters.push(`Data Source: ${filters.dataSource}`);
+    }
+    
+    // If we have summary filters, combine them with $and
+    if (summaryFilters.length > 0) {
+      if (summaryFilters.length === 1) {
+        filterObj['summary'] = { '$contains': summaryFilters[0] };
+      } else {
+        // For multiple summary filters, use $and to ensure all conditions are met
+        filterObj['$and'] = summaryFilters.map(filter => ({
+          'summary': { '$contains': filter }
+        }));
+      }
+    }
+    
+    if (filters.fileType) {
+      filterObj['fileType'] = filters.fileType;
+    }
+    
+    if (filters.priceRange) {
+      const [min, max] = filters.priceRange.split('-').map(p => parseFloat(p));
+      if (!isNaN(min) && !isNaN(max)) {
+        filterObj['price'] = { '$gte': min, '$lte': max };
+      }
+    }
+    
+    return filterObj;
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      dataType: '',
+      gender: '',
+      ageRange: '',
+      dataSource: '',
+      priceRange: '',
+      fileType: ''
+    });
+    setUseFilters(false);
   };
 
   const handlePurchaseAndDownload = async (result, index) => {
@@ -105,7 +198,7 @@ export default function SearchData({ onBack }) {
 
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex gap-2">
+          <div className="flex gap-2 mb-4">
             <input
               type="text"
               value={searchQuery}
@@ -122,6 +215,148 @@ export default function SearchData({ onBack }) {
               {isSearching ? 'Searching...' : 'Search'}
             </button>
           </div>
+          
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </button>
+            
+            {useFilters && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-green-600">Filters Active</span>
+                <button
+                  onClick={resetFilters}
+                  className="text-sm text-red-600 hover:text-red-700"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {showFilters && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Data Type</label>
+                  <select
+                    value={filters.dataType}
+                    onChange={(e) => {
+                      setFilters({...filters, dataType: e.target.value});
+                      setUseFilters(true);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Types</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Institution">Institution</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                  <select
+                    value={filters.gender}
+                    onChange={(e) => {
+                      setFilters({...filters, gender: e.target.value});
+                      setUseFilters(true);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Genders</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Mixed">Mixed</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Data Source</label>
+                  <select
+                    value={filters.dataSource}
+                    onChange={(e) => {
+                      setFilters({...filters, dataSource: e.target.value});
+                      setUseFilters(true);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Sources</option>
+                    <option value="Hospital">Hospital</option>
+                    <option value="Clinic">Clinic</option>
+                    <option value="Laboratory">Laboratory</option>
+                    <option value="Research Institution">Research Institution</option>
+                    <option value="Medical Device">Medical Device</option>
+                    <option value="Electronic Health Record">Electronic Health Record</option>
+                    <option value="Patient Self-Reported">Patient Self-Reported</option>
+                    <option value="Insurance Claims">Insurance Claims</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">File Type</label>
+                  <select
+                    value={filters.fileType}
+                    onChange={(e) => {
+                      setFilters({...filters, fileType: e.target.value});
+                      setUseFilters(true);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Types</option>
+                    <option value="application/pdf">PDF</option>
+                    <option value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">DOCX</option>
+                    <option value="application/msword">DOC</option>
+                    <option value="text/plain">TXT</option>
+                    <option value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">XLSX</option>
+                    <option value="application/vnd.ms-excel">XLS</option>
+                    <option value="text/csv">CSV</option>
+                    <option value="application/json">JSON</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price Range (ETH)</label>
+                  <select
+                    value={filters.priceRange}
+                    onChange={(e) => {
+                      setFilters({...filters, priceRange: e.target.value});
+                      setUseFilters(true);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Prices</option>
+                    <option value="0-0.01">0 - 0.01 ETH</option>
+                    <option value="0.01-0.05">0.01 - 0.05 ETH</option>
+                    <option value="0.05-0.1">0.05 - 0.1 ETH</option>
+                    <option value="0.1-0.5">0.1 - 0.5 ETH</option>
+                    <option value="0.5-1">0.5 - 1 ETH</option>
+                    <option value="1-999">1+ ETH</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex justify-end mt-4 gap-2">
+                <button
+                  onClick={resetFilters}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Clear Filters
+                </button>
+                <button
+                  onClick={handleSearchSubmit}
+                  disabled={isSearching}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {searchResults && (
@@ -134,7 +369,12 @@ export default function SearchData({ onBack }) {
               return (
                 <>
                   <h3 className="text-lg font-semibold mb-4">
-                    Search Results ({resultsArray.length || 0} found):
+                    {useFilters ? 'Filtered Results' : 'Search Results'} ({resultsArray.length || 0} found)
+                    {useFilters && (
+                      <span className="text-sm font-normal text-blue-600 ml-2">
+                        • Filters applied
+                      </span>
+                    )}
                   </h3>
                   
                   {resultsArray.length === 0 ? (
@@ -196,6 +436,53 @@ export default function SearchData({ onBack }) {
                                   <span className="font-medium">Relevance:</span> {(result.score * 100).toFixed(1)}%
                                 </div>
                               )}
+                              
+                              {/* Extract and display enhanced metadata from summary */}
+                              {(() => {
+                                const summary = result.summary || '';
+                                const extractField = (fieldName) => {
+                                  const regex = new RegExp(`${fieldName}:\\s*([^\\n]+)`);
+                                  const match = summary.match(regex);
+                                  return match ? match[1].trim() : null;
+                                };
+                                
+                                const dataType = extractField('Data Type');
+                                const gender = extractField('Gender');
+                                const age = extractField('Age');
+                                const ageRange = extractField('Age Range');
+                                const dataSource = extractField('Data Source');
+                                const diseaseTags = extractField('Disease Tags');
+                                
+                                return (
+                                  <>
+                                    {dataType && (
+                                      <div>
+                                        <span className="font-medium">Data Type:</span> {dataType}
+                                      </div>
+                                    )}
+                                    {gender && (
+                                      <div>
+                                        <span className="font-medium">Gender:</span> {gender}
+                                      </div>
+                                    )}
+                                    {(age || ageRange) && (
+                                      <div>
+                                        <span className="font-medium">{age ? 'Age' : 'Age Range'}:</span> {age || ageRange}
+                                      </div>
+                                    )}
+                                    {dataSource && (
+                                      <div>
+                                        <span className="font-medium">Data Source:</span> {dataSource}
+                                      </div>
+                                    )}
+                                    {diseaseTags && (
+                                      <div className="col-span-2">
+                                        <span className="font-medium">Disease Tags:</span> {diseaseTags}
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
                             </div>
                             
                             {(result.cid || result.ipfsHash || result.hash) && (
